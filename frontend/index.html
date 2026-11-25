@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Memo</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+
+  <!-- 設定エリア -->
+  <div id="settings-area" style="display:none;">
+    <div class="settings-container">
+      <h1>My Memo - 初期設定</h1>
+      <p class="settings-desc">GitHub の接続情報を設定してください。<br>設定値はこのブラウザの localStorage に保存されます。</p>
+      <div class="settings-form">
+        <label>
+          Personal Access Token
+          <input type="password" id="input-token" placeholder="ghp_xxxxxxxxxx">
+        </label>
+        <label>
+          リポジトリオーナー
+          <input type="text" id="input-owner" placeholder="your-github-username">
+        </label>
+        <label>
+          データリポジトリ名
+          <input type="text" id="input-repo" placeholder="my-memo-data">
+        </label>
+        <div class="settings-actions">
+          <button id="btn-save-settings" class="btn-primary">保存して始める</button>
+          <button id="btn-cancel-settings" class="btn-secondary">キャンセル</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- メインエリア -->
+  <div id="main-area" style="display:none;">
+    <header>
+      <h1>My Memo</h1>
+      <button id="btn-open-settings" class="btn-icon" title="設定">⚙</button>
+    </header>
+
+    <!-- 追加エリア -->
+    <div class="add-area">
+      <textarea id="add-input" placeholder="メモを入力..." rows="4"></textarea>
+      <div class="add-actions">
+        <button id="btn-add" class="btn-primary">追加</button>
+      </div>
+    </div>
+
+    <!-- ステータス -->
+    <div id="status" class="status"></div>
+    <div id="loading" class="loading" style="display:none;">保存中...</div>
+
+    <!-- エントリ一覧 -->
+    <div id="entry-list"></div>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
