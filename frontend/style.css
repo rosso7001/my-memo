@@ -67,6 +67,27 @@ button:hover {
   color: #57606a;
 }
 
+/* ===== 年月プルダウン ===== */
+.month-select-area {
+  margin-bottom: 10px;
+}
+
+#month-select {
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 14px;
+  font-family: inherit;
+  background: #fff;
+  color: #1f2328;
+  outline: none;
+  cursor: pointer;
+}
+
+#month-select:focus {
+  border-color: #3b82d4;
+}
+
 /* ===== 追加エリア ===== */
 .add-area {
   background: #fff;

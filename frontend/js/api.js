@@ -59,6 +59,26 @@ export async function fetchFile(path) {
  * @param {string} message - コミットメッセージ
  * @returns {Promise<void>}
  */
+
+/**
+ * data/ ディレクトリのファイル名一覧を取得する
+ * @returns {Promise<string[]>} ファイル名の配列（例: ["202610.md", "202611.md"]）
+ *   ディレクトリが存在しない場合は []
+ */
+export async function fetchFileList() {
+  const { owner, repo } = getConfig();
+  const url = `${BASE}/repos/${owner}/${repo}/contents/data`;
+  const res = await fetch(url, { headers: headers() });
+
+  if (res.status === 404) return [];
+  if (!res.ok) throw new Error(`GitHub API GET failed: ${res.status}`);
+
+  const json = await res.json();
+  return json
+    .filter(item => item.type === 'file' && item.name.endsWith('.md'))
+    .map(item => item.name);
+}
+
 export async function saveFile(path, content, sha, message) {
   const { owner, repo } = getConfig();
   const url = `${BASE}/repos/${owner}/${repo}/contents/${path}`;

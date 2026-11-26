@@ -115,9 +115,11 @@ export function deleteEntry(entries, timestamp) {
 }
 
 /**
- * 当該年のファイル名を返す（例: "2026.md"）
+ * 当該年月のファイル名を返す（例: "202611.md"）
  * @returns {string}
  */
-export function currentYearFile() {
-  return `${new Date().getFullYear()}.md`;
+export function currentYearMonthFile() {
+  const d = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}${pad(d.getMonth() + 1)}.md`;
 }

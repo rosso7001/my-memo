@@ -3,12 +3,13 @@
  * 画面描画・UIイベント処理
  */
 
-import { parseEntries, entriesToMd, addEntry, editEntry, deleteEntry, formatTimestamp, currentYearFile } from './memo.js';
-import { fetchFile, saveFile } from './api.js';
+import { parseEntries, entriesToMd, addEntry, editEntry, deleteEntry, formatTimestamp, currentYearMonthFile } from './memo.js';
+import { fetchFile, saveFile, fetchFileList } from './api.js';
 
 // 現在読み込んでいるファイルの SHA をキャッシュ
 let currentSha = null;
 let currentEntries = [];
+let currentFile = null;  // 現在選択中のファイル名（例: "202611.md"）
 
 // ---- 設定チェック ----
 
@@ -87,11 +88,11 @@ function renderEntries(entries) {
 
 // ---- データ読み込み ----
 
-async function loadMemo() {
+async function loadMemo(file) {
   setLoading(true);
   setStatus('');
   try {
-    const file = currentYearFile();
+    currentFile = file;
     const { content, sha } = await fetchFile(`data/${file}`);
     currentSha = sha;
     currentEntries = parseEntries(content);
@@ -106,7 +107,7 @@ async function loadMemo() {
 // ---- 保存共通 ----
 
 async function saveMemo(entries, message) {
-  const file = currentYearFile();
+  const file = currentFile;
   const mdText = entriesToMd(entries);
   await saveFile(`data/${file}`, mdText, currentSha, message);
   // 保存後に SHA を更新するため再取得
@@ -217,17 +218,48 @@ function onSaveSettings() {
   localStorage.setItem('memo_repo',  repo);
 
   showMain();
-  loadMemo();
+  initMonthSelect();
 }
 
 // ---- 初期化 ----
+
+// ---- 年月プルダウン ----
+
+async function initMonthSelect() {
+  const select = document.getElementById('month-select');
+  select.innerHTML = '';
+
+  const files = await fetchFileList();
+  const thisMonth = currentYearMonthFile();  // 例: "202611.md"
+
+  // ファイルが存在しない場合は当月ファイルをダミーとして追加
+  const list = files.length > 0 ? files : [thisMonth];
+
+  // 新しい順（辞書順降順）で並べる
+  list.sort((a, b) => b.localeCompare(a));
+
+  list.forEach(name => {
+    const yyyymm = name.replace('.md', '');
+    const label = `${yyyymm.slice(0, 4)}年${yyyymm.slice(4, 6)}月`;
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = label;
+    if (name === thisMonth) opt.selected = true;
+    select.appendChild(opt);
+  });
+
+  // 初期ロード
+  await loadMemo(select.value);
+
+  select.addEventListener('change', () => loadMemo(select.value));
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   if (!isConfigured()) {
     showSettings();
   } else {
     showMain();
-    loadMemo();
+    initMonthSelect();
   }
 
   document.getElementById('btn-add').addEventListener('click', onAddClick);
