@@ -97,6 +97,9 @@ async function loadMemo(file) {
     currentSha = sha;
     currentEntries = parseEntries(content);
     renderEntries(currentEntries);
+    // 当月以外は追加エリアを非表示
+    const isCurrentMonth = (file === currentYearMonthFile());
+    document.querySelector('.add-area').style.display = isCurrentMonth ? 'block' : 'none';
   } catch (e) {
     setStatus(`読み込みエラー: ${e.message}`, true);
   } finally {
