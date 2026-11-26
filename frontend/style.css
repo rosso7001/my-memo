@@ -67,6 +67,17 @@ button:hover {
   color: #57606a;
 }
 
+/* ===== マイクボタン（音声入力） ===== */
+@keyframes mic-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
+#btn-mic.listening {
+  color: #d73a49;
+  animation: mic-pulse 1s ease-in-out infinite;
+}
+
 /* ===== 年月プルダウン ===== */
 .month-select-area {
   margin-bottom: 10px;

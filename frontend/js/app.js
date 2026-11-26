@@ -257,12 +257,83 @@ async function initMonthSelect() {
   select.addEventListener('change', () => loadMemo(select.value));
 }
 
+// ---- 音声入力 ----
+
+/**
+ * Web Speech API でマイク入力を初期化する。
+ * 戻り値: 音声認識を開始する関数（ブラウザ非対応時は null）
+ */
+function initSpeechInput() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const btn = document.getElementById('btn-mic');
+
+  if (!SpeechRecognition) {
+    btn.style.display = 'none';
+    return null;
+  }
+
+  const recognition = new SpeechRecognition();
+  recognition.lang = 'ja-JP';
+  recognition.interimResults = false;
+  recognition.continuous = true;
+
+  let isListening = false;
+
+  function startMic() {
+    recognition.start();
+    isListening = true;
+    btn.textContent = '⏹️';
+    btn.classList.add('listening');
+  }
+
+  function stopMic() {
+    recognition.stop();
+    isListening = false;
+    btn.textContent = '🎤';
+    btn.classList.remove('listening');
+  }
+
+  recognition.onresult = (e) => {
+    const textarea = document.getElementById('add-input');
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      textarea.value += e.results[i][0].transcript;
+    }
+  };
+
+  // 認識が自動終了した場合（continuous でも端末によって止まることがある）にボタン状態をリセット
+  recognition.onend = () => {
+    if (isListening) {
+      // 継続認識中に意図せず終了した場合は再開
+      recognition.start();
+    }
+  };
+
+  btn.addEventListener('click', () => {
+    if (isListening) {
+      stopMic();
+    } else {
+      startMic();
+    }
+  });
+
+  return startMic;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  const micParam = new URLSearchParams(location.search).get('mic');
+
   if (!isConfigured()) {
     showSettings();
   } else {
     showMain();
     initMonthSelect();
+  }
+
+  const startMic = initSpeechInput();
+
+  // ?mic=1 かつ設定済みの場合は自動でマイクON
+  if (micParam === '1' && isConfigured() && startMic) {
+    startMic();
   }
 
   document.getElementById('btn-add').addEventListener('click', onAddClick);
