@@ -300,6 +300,13 @@ function initSpeechInput() {
     }
   };
 
+  // エラー発生時はボタン状態をリセットして停止（権限エラー等で再起動しないようにする）
+  recognition.onerror = () => {
+    isListening = false;
+    btn.textContent = '🎤';
+    btn.classList.remove('listening');
+  };
+
   // 認識が自動終了した場合（continuous でも端末によって止まることがある）にボタン状態をリセット
   recognition.onend = () => {
     if (isListening) {
