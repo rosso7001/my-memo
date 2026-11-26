@@ -300,18 +300,24 @@ function initSpeechInput() {
     }
   };
 
-  // エラー発生時はボタン状態をリセットして停止（権限エラー等で再起動しないようにする）
-  recognition.onerror = () => {
-    isListening = false;
-    btn.textContent = '🎤';
-    btn.classList.remove('listening');
+  // エラー発生時はボタン状態をリセットして停止（権限エラー・already started 競合等）
+  recognition.onerror = (e) => {
+    if (e.error === 'not-allowed' || e.error === 'audio-capture') {
+      // 権限なし・デバイスなしは再起動しない
+      isListening = false;
+      btn.textContent = '🎤';
+      btn.classList.remove('listening');
+    }
+    // その他のエラー（no-speech 等）は onend に任せる（再起動させる）
   };
 
   // 認識が自動終了した場合（continuous でも端末によって止まることがある）にボタン状態をリセット
   recognition.onend = () => {
     if (isListening) {
-      // 継続認識中に意図せず終了した場合は再開
-      recognition.start();
+      // 競合を避けるため少し遅延してから再起動
+      setTimeout(() => {
+        if (isListening) recognition.start();
+      }, 300);
     }
   };
 
