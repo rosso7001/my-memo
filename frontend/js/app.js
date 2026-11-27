@@ -4,7 +4,7 @@
  */
 
 import { parseEntries, entriesToMd, addEntry, editEntry, deleteEntry, formatTimestamp, currentYearMonthFile } from './memo.js';
-import { fetchFile, saveFile, fetchFileList } from './api.js';
+import { fetchFile, saveFile, fetchFileList, deleteFile } from './api.js';
 
 // 現在読み込んでいるファイルの SHA をキャッシュ
 let currentSha = null;
@@ -97,9 +97,10 @@ async function loadMemo(file) {
     currentSha = sha;
     currentEntries = parseEntries(content);
     renderEntries(currentEntries);
-    // 当月以外は追加エリアを非表示
+    // 当月以外は追加エリアを非表示、マージエリアを表示
     const isCurrentMonth = (file === currentYearMonthFile());
-    document.querySelector('.add-area').style.display = isCurrentMonth ? 'block' : 'none';
+    document.querySelector('.add-area').style.display   = isCurrentMonth ? 'block' : 'none';
+    document.querySelector('.merge-area').style.display = isCurrentMonth ? 'none'  : 'block';
   } catch (e) {
     setStatus(`読み込みエラー: ${e.message}`, true);
   } finally {
@@ -204,6 +205,59 @@ async function onDeleteClick(ts) {
   }
 }
 
+// ---- ファイルマージ ----
+
+/**
+ * fileList の中から file より未来で最も近い年月のファイル名を返す
+ * 見つからない場合は null
+ */
+function findMergeTarget(file, fileList) {
+  const src = file.replace('.md', '');
+  const candidates = fileList
+    .map(f => f.replace('.md', ''))
+    .filter(yyyymm => yyyymm > src)
+    .sort();
+  return candidates.length > 0 ? candidates[0] + '.md' : null;
+}
+
+async function onMergeClick() {
+  const files = await fetchFileList();
+  const targetFile = findMergeTarget(currentFile, files);
+  if (!targetFile) {
+    setStatus('マージ先ファイルが見つかりません', true);
+    return;
+  }
+
+  if (!confirm(`${currentFile} の内容を ${targetFile} にマージします。よろしいですか？`)) return;
+
+  setLoading(true);
+  setStatus('');
+  try {
+    // マージ先・マージ元を取得
+    const { content: destContent, sha: destSha } = await fetchFile(`data/${targetFile}`);
+    const { sha: srcSha } = await fetchFile(`data/${currentFile}`);
+
+    // エントリを連結（マージ先の末尾にマージ元を付ける）
+    const destEntries = parseEntries(destContent);
+    const mergedEntries = [...destEntries, ...currentEntries];
+
+    // マージ先を上書き保存
+    await saveFile(`data/${targetFile}`, entriesToMd(mergedEntries), destSha, `${currentFile} を ${targetFile} にマージ`);
+
+    // マージ元ファイルを削除
+    await deleteFile(`data/${currentFile}`, srcSha, `${currentFile} 削除（マージ済み）`);
+
+    setStatus(`${targetFile} にマージしました`);
+
+    // プルダウンを再構築し、マージ先ファイルへ切り替える
+    await initMonthSelect(targetFile);
+  } catch (e) {
+    setStatus(`マージエラー: ${e.message}`, true);
+  } finally {
+    setLoading(false);
+  }
+}
+
 // ---- 設定保存 ----
 
 function onSaveSettings() {
@@ -228,7 +282,7 @@ function onSaveSettings() {
 
 // ---- 年月プルダウン ----
 
-async function initMonthSelect() {
+async function initMonthSelect(selectFile = null) {
   const select = document.getElementById('month-select');
   select.innerHTML = '';
 
@@ -241,13 +295,16 @@ async function initMonthSelect() {
   // 新しい順（辞書順降順）で並べる
   list.sort((a, b) => b.localeCompare(a));
 
+  // 初期選択：引数指定があればそれを優先、なければ当月
+  const initialFile = (selectFile && list.includes(selectFile)) ? selectFile : thisMonth;
+
   list.forEach(name => {
     const yyyymm = name.replace('.md', '');
     const label = `${yyyymm.slice(0, 4)}年${yyyymm.slice(4, 6)}月`;
     const opt = document.createElement('option');
     opt.value = name;
     opt.textContent = label;
-    if (name === thisMonth) opt.selected = true;
+    if (name === initialFile) opt.selected = true;
     select.appendChild(opt);
   });
 
@@ -336,6 +393,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   document.getElementById('btn-add').addEventListener('click', onAddClick);
+  document.getElementById('btn-merge').addEventListener('click', onMergeClick);
   document.getElementById('btn-save-settings').addEventListener('click', onSaveSettings);
   document.getElementById('btn-open-settings').addEventListener('click', () => {
     document.getElementById('input-token').value = localStorage.getItem('memo_token') || '';

@@ -97,3 +97,23 @@ export async function saveFile(path, content, sha, message) {
 
   if (!res.ok) throw new Error(`GitHub API PUT failed: ${res.status}`);
 }
+
+/**
+ * 指定ファイルを削除する
+ * @param {string} path - リポジトリ内パス（例: "data/202602.md"）
+ * @param {string} sha - 削除対象ファイルの SHA
+ * @param {string} message - コミットメッセージ
+ * @returns {Promise<void>}
+ */
+export async function deleteFile(path, sha, message) {
+  const { owner, repo } = getConfig();
+  const url = `${BASE}/repos/${owner}/${repo}/contents/${path}`;
+
+  const res = await fetch(url, {
+    method: 'DELETE',
+    headers: { ...headers(), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message, sha }),
+  });
+
+  if (!res.ok) throw new Error(`GitHub API DELETE failed: ${res.status}`);
+}
