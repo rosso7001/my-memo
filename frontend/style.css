@@ -215,6 +215,20 @@ button:hover {
 .entry-body blockquote { border-left: 3px solid #e5e7eb; padding-left: 10px; color: #57606a; margin: 4px 0; }
 .entry-body strong { font-weight: 600; }
 
+/* ===== ファイルマージエリア ===== */
+.merge-area {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+#btn-merge {
+  background: #f0f4ff;
+  color: #3b82d4;
+  font-size: 12px;
+  padding: 3px 10px;
+}
+
 /* ===== 編集エリア ===== */
 .edit-textarea {
   width: 100%;

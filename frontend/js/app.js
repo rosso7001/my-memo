@@ -100,7 +100,7 @@ async function loadMemo(file) {
     // 当月以外は追加エリアを非表示、マージエリアを表示
     const isCurrentMonth = (file === currentYearMonthFile());
     document.querySelector('.add-area').style.display   = isCurrentMonth ? 'block' : 'none';
-    document.querySelector('.merge-area').style.display = isCurrentMonth ? 'none'  : 'block';
+    document.querySelector('.merge-area').style.display = isCurrentMonth ? 'none'  : 'flex';
   } catch (e) {
     setStatus(`読み込みエラー: ${e.message}`, true);
   } finally {
